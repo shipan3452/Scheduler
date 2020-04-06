@@ -1,7 +1,6 @@
 {
     "require": {
         "symfony/process": "^4.4",
-        "mtdowling/cron-expression": "^1.2",
-        "nesbot/carbon": "^2.32"
+        "mtdowling/cron-expression": "^1.2"
     }
 }
