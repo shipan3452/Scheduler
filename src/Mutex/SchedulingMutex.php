@@ -1,11 +1,17 @@
-<?php 
+<?php
+
+namespace Scheduler\Mutex;
+
+use \DateTimeInterface;
+
+use Scheduler\Event;
 
 interface SchedulingMutex
 {
     /**
      * Attempt to obtain a scheduling mutex for the given event.
      *
-     * @param  \Illuminate\Console\Scheduling\Event  $event
+     * @param  Scheduler\Event  $event
      * @param  \DateTimeInterface  $time
      * @return bool
      */
@@ -14,7 +20,7 @@ interface SchedulingMutex
     /**
      * Determine if a scheduling mutex exists for the given event.
      *
-     * @param  \Illuminate\Console\Scheduling\Event  $event
+     * @param  Scheduler\Event  $event
      * @param  \DateTimeInterface  $time
      * @return bool
      */

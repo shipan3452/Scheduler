@@ -1,7 +1,7 @@
 <?php 
-
-use Illuminate\Console\Application;
-use ProcessUtils;
+namespace Scheduler;
+use Scheduler\Utility\ProcessUtils;
+use Scheduler\Event;
 
 class CommandBuilder
 {
@@ -47,25 +47,15 @@ class CommandBuilder
 
         $redirect = $event->shouldAppendOutput ? ' >> ' : ' > ';
 
-        $finished = self::formatCommandString('schedule:finish').' "'.$event->mutexName().'"';
+ 
 
         return $this->ensureCorrectUser($event,
-            '('.$event->command.$redirect.$output.' 2>&1 '.(windows_os() ? '&' : ';').' '.$finished.') > '
+            '('.$event->command.$redirect.$output.' 2>&1 '.(windows_os() ? '&' : ';').') > '
             .ProcessUtils::escapeArgument($event->getDefaultOutput()).' 2>&1 &'
         );
     }
 
-    /**
-     * Format the given command as a fully-qualified executable command.
-     *
-     * @param  string  $string
-     * @return string
-     */
-    public static function formatCommandString($string)
-    {
-        return sprintf('%s %s', static::phpBinary(), $string);
-    }
-
+ 
     /**
      * Finalize the event's command syntax with the correct user.
      *

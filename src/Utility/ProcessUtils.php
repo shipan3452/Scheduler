@@ -1,5 +1,5 @@
 <?php
-
+namespace Scheduler\Utility;
 /**
  * ProcessUtils is a bunch of utility methods.
  *

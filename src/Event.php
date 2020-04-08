@@ -1,17 +1,14 @@
 <?php
 
-namespace Illuminate\Console\Scheduling;
+namespace Scheduler;
 
 use Closure;
 use Cron\CronExpression;
 use Symfony\Component\Process\Process;
-use Illuminate\Support\Traits\Macroable;
-
+use Scheduler\Mutex\EventMutex;
 
 class Event
 {
-    use Macroable, ManagesFrequencies;
-
     /**
      * The command string.
      *
@@ -134,18 +131,18 @@ class Event
     /**
      * The event mutex implementation.
      *
-     * @var \Illuminate\Console\Scheduling\EventMutex
+     * @var EventMutex
      */
     public $mutex;
 
     /**
      * Create a new event instance.
      *
-     * @param  \Illuminate\Console\Scheduling\EventMutex  $mutex
+     * @param  EventMutex  $mutex
      * @param  string  $command
      * @return void
      */
-    public function __construct(EventMutex $mutex, $command)
+    public function __construct($command, EventMutex $mutex = null)
     {
         $this->mutex = $mutex;
         $this->command = $command;
@@ -165,19 +162,20 @@ class Event
     /**
      * Run the given event.
      *
-     * @param  \Illuminate\Contracts\Container\Container  $container
      * @return void
      */
-    public function run(Container $container)
+    public function run()
     {
-        if ($this->withoutOverlapping &&
-            ! $this->mutex->create($this)) {
+        if (
+            $this->withoutOverlapping &&
+            !$this->mutex->create($this)
+        ) {
             return;
         }
 
         $this->runInBackground
-                    ? $this->runCommandInBackground($container)
-                    : $this->runCommandInForeground($container);
+            ? $this->runCommandInBackground()
+            : $this->runCommandInForeground();
     }
 
     /**
@@ -187,64 +185,67 @@ class Event
      */
     public function mutexName()
     {
-        return 'framework'.DIRECTORY_SEPARATOR.'schedule-'.sha1($this->expression.$this->command);
+        return 'Scheduler' . DIRECTORY_SEPARATOR . 'event-' . sha1($this->expression . $this->command);
     }
 
     /**
      * Run the command in the foreground.
      *
-     * @param  \Illuminate\Contracts\Container\Container  $container
      * @return void
      */
-    protected function runCommandInForeground(Container $container)
+    protected function runCommandInForeground()
     {
-        $this->callBeforeCallbacks($container);
+        $this->callBeforeCallbacks();
 
         (new Process(
-            $this->buildCommand(), base_path(), null, null, null
+            $this->buildCommand(),
+            base_path(),
+            null,
+            null,
+            null
         ))->run();
 
-        $this->callAfterCallbacks($container);
+        $this->callAfterCallbacks();
     }
 
     /**
      * Run the command in the background.
      *
-     * @param  \Illuminate\Contracts\Container\Container  $container
      * @return void
      */
-    protected function runCommandInBackground(Container $container)
+    protected function runCommandInBackground()
     {
-        $this->callBeforeCallbacks($container);
+        $this->callBeforeCallbacks();
 
         (new Process(
-            $this->buildCommand(), base_path(), null, null, null
+            $this->buildCommand(),
+            base_path(),
+            null,
+            null,
+            null
         ))->run();
     }
 
     /**
      * Call all of the "before" callbacks for the event.
      *
-     * @param  \Illuminate\Contracts\Container\Container  $container
      * @return void
      */
-    public function callBeforeCallbacks(Container $container)
+    public function callBeforeCallbacks()
     {
         foreach ($this->beforeCallbacks as $callback) {
-            $container->call($callback);
+            call_user_func($callback);
         }
     }
 
     /**
      * Call all of the "after" callbacks for the event.
-     *
-     * @param  \Illuminate\Contracts\Container\Container  $container
      * @return void
      */
-    public function callAfterCallbacks(Container $container)
+    public function callAfterCallbacks()
     {
         foreach ($this->afterCallbacks as $callback) {
-            $container->call($callback);
+            call_user_func($callback);
         }
     }
 
@@ -266,12 +267,12 @@ class Event
      */
     public function isDue($app)
     {
-        if (! $this->runsInMaintenanceMode() && $app->isDownForMaintenance()) {
+        if (!$this->runsInMaintenanceMode() && $app->isDownForMaintenance()) {
             return false;
         }
 
         return $this->expressionPasses() &&
-               $this->runsInEnvironment($app->environment());
+            $this->runsInEnvironment($app->environment());
     }
 
     /**
@@ -309,28 +310,6 @@ class Event
         return empty($this->environments) || in_array($environment, $this->environments);
     }
 
-    /**
-     * Determine if the filters pass for the event.
-     *
-     * @param  \Illuminate\Contracts\Foundation\Application  $app
-     * @return bool
-     */
-    public function filtersPass($app)
-    {
-        foreach ($this->filters as $callback) {
-            if (! $app->call($callback)) {
-                return false;
-            }
-        }
-
-        foreach ($this->rejects as $callback) {
-            if ($app->call($callback)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     /**
      * Send the output of the command to a given location.
@@ -359,9 +338,6 @@ class Event
         return $this->sendOutputTo($location, true);
     }
 
-
-
-   
 
     /**
      * State that the command should run in background.
@@ -564,7 +540,7 @@ class Event
     /**
      * Set the event mutex implementation to be used.
      *
-     * @param  \Illuminate\Console\Scheduling\EventMutex  $mutex
+     * @param  EventMutex  $mutex
      * @return $this
      */
     public function preventOverlapsUsing(EventMutex $mutex)

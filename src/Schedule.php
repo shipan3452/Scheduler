@@ -1,8 +1,11 @@
 <?php
+
 namespace Scheduler;
 
 use DateTimeInterface;
-use Illuminate\Support\ProcessUtils;
+use Scheduler\Utility\ProcessUtils;
+use Scheduler\Mutex\EventMutex;
+
 
 class Schedule
 {
@@ -16,14 +19,14 @@ class Schedule
     /**
      * The event mutex implementation.
      *
-     * @var \Illuminate\Console\Scheduling\EventMutex
+     * @var EventMutex
      */
     protected $eventMutex;
 
     /**
      * The scheduling mutex implementation.
      *
-     * @var \Illuminate\Console\Scheduling\SchedulingMutex
+     * @var SchedulingMutex
      */
     protected $schedulingMutex;
 
@@ -34,33 +37,35 @@ class Schedule
      */
     public function __construct()
     {
-        $container = Container::getInstance();
-
-        $this->eventMutex = $container->bound(EventMutex::class)
-                                ? $container->make(EventMutex::class)
-                                : $container->make(CacheEventMutex::class);
-
-        $this->schedulingMutex = $container->bound(SchedulingMutex::class)
-                                ? $container->make(SchedulingMutex::class)
-                                : $container->make(CacheSchedulingMutex::class);
+        //创建锁
     }
 
- 
+
+    public function run()
+    {
+        foreach ($this->dueEvents() as $event) {
+            // if (! $event->filtersPass($this->laravel)) {
+            //     continue;
+            // }
+            $event->run();
+            $event->callAfterCallbacks();
+        }
+    }
+
+
     /**
      * Add a new command event to the schedule.
      *
      * @param  string  $command
      * @param  array  $parameters
-     * @return \Illuminate\Console\Scheduling\Event
+     * @return Event
      */
     public function exec($command, array $parameters = [])
     {
         if (count($parameters)) {
-            $command .= ' '.$this->compileParameters($parameters);
+            $command .= ' ' . $this->compileParameters($parameters);
         }
-
-        $this->events[] = $event = new Event($this->eventMutex, $command);
-
+        $this->events[] = $event = new Event($command, $this->eventMutex);
         return $event;
     }
 
@@ -72,17 +77,18 @@ class Schedule
      */
     protected function compileParameters(array $parameters)
     {
-        return collect($parameters)->map(function ($value, $key) {
-            if (is_array($value)) {
-                $value = collect($value)->map(function ($value) {
-                    return ProcessUtils::escapeArgument($value);
-                })->implode(' ');
-            } elseif (! is_numeric($value) && ! preg_match('/^(-.$|--.*)/i', $value)) {
-                $value = ProcessUtils::escapeArgument($value);
+        array_walk($parameters, function (&$val, $key) {
+            if (is_array($val)) {
+                $val = array_map(function ($val2) {
+                    return ProcessUtils::escapeArgument($val2);
+                }, $val);
+                $val = implode(" ", $val);
+            } elseif (!is_numeric($val) && !preg_match('/^(-.$|--.*)/i', $val)) {
+                $val = ProcessUtils::escapeArgument($val);
             }
-
-            return is_numeric($key) ? $value : "{$key}={$value}";
-        })->implode(' ');
+            return $val = is_numeric($key) ? $val : "{$key}={$val}";
+        });
+        return  implode(" ", $parameters);
     }
 
     /**
@@ -92,17 +98,17 @@ class Schedule
      * @param  \DateTimeInterface  $time
      * @return bool
      */
-    public function serverShouldRun(Event $event, DateTimeInterface $time)
-    {
-        return $this->schedulingMutex->create($event, $time);
-    }
+    // public function serverShouldRun(Event $event, DateTimeInterface $time)
+    // {
+    //     return $this->schedulingMutex->create($event, $time);
+    // }
 
     /**
      * Get all of the events on the schedule that are due.
      */
     public function dueEvents()
     {
-        return array_filter($this->events,function($event){
+        return array_filter($this->events, function ($event) {
             return $event->isDue();
         });
     }
@@ -125,14 +131,13 @@ class Schedule
      */
     public function useCache($store)
     {
-        if ($this->eventMutex instanceof CacheEventMutex) {
-            $this->eventMutex->useStore($store);
-        }
+        // if ($this->eventMutex instanceof CacheEventMutex) {
+        //     $this->eventMutex->useStore($store);
+        // }
 
-        if ($this->schedulingMutex instanceof CacheSchedulingMutex) {
-            $this->schedulingMutex->useStore($store);
-        }
-
-        return $this;
+        // if ($this->schedulingMutex instanceof CacheSchedulingMutex) {
+        //     $this->schedulingMutex->useStore($store);
+        // }
+        // return $this;
     }
 }
