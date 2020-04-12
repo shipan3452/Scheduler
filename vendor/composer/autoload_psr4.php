@@ -7,5 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Symfony\\Component\\Process\\' => array($vendorDir . '/symfony/process'),
+    'Scheduler\\' => array($baseDir . '/src'),
+    'Predis\\' => array($vendorDir . '/predis/predis/src'),
     'Cron\\' => array($vendorDir . '/mtdowling/cron-expression/src/Cron'),
 );

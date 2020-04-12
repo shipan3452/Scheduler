@@ -64,4 +64,15 @@ class ProcessUtils
     {
         return 2 < strlen($arg) && $char === $arg[0] && $char === $arg[strlen($arg) - 1];
     }
+
+
+    /**
+     * Determine whether the current environment is Windows based.
+     *
+     * @return bool
+     */
+    public  static function windowsOs()
+    {
+        return strtolower(substr(PHP_OS, 0, 3)) === 'win';
+    }
 }

@@ -3,9 +3,8 @@
 namespace Scheduler;
 
 use DateTimeInterface;
-use Scheduler\Utility\ProcessUtils;
 use Scheduler\Mutex\EventMutex;
-
+use Scheduler\Utility\ProcessUtils;
 
 class Schedule
 {
@@ -35,11 +34,10 @@ class Schedule
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(EventMutex $eventMutex = null)
     {
-        //创建锁
+        $this->eventMutex = $eventMutex;
     }
-
 
     public function run()
     {
@@ -51,7 +49,6 @@ class Schedule
             $event->callAfterCallbacks();
         }
     }
-
 
     /**
      * Add a new command event to the schedule.
@@ -88,7 +85,7 @@ class Schedule
             }
             return $val = is_numeric($key) ? $val : "{$key}={$val}";
         });
-        return  implode(" ", $parameters);
+        return implode(" ", $parameters);
     }
 
     /**
@@ -116,28 +113,10 @@ class Schedule
     /**
      * Get all of the events on the schedule.
      *
-     * @return \Illuminate\Console\Scheduling\Event[]
+     * @return Event[]
      */
     public function events()
     {
         return $this->events;
-    }
-
-    /**
-     * Specify the cache store that should be used to store mutexes.
-     *
-     * @param  string  $store
-     * @return $this
-     */
-    public function useCache($store)
-    {
-        // if ($this->eventMutex instanceof CacheEventMutex) {
-        //     $this->eventMutex->useStore($store);
-        // }
-
-        // if ($this->schedulingMutex instanceof CacheSchedulingMutex) {
-        //     $this->schedulingMutex->useStore($store);
-        // }
-        // return $this;
     }
 }

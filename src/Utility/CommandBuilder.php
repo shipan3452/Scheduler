@@ -1,5 +1,5 @@
 <?php 
-namespace Scheduler;
+namespace Scheduler\Utility;
 use Scheduler\Utility\ProcessUtils;
 use Scheduler\Event;
 
@@ -23,7 +23,7 @@ class CommandBuilder
     /**
      * Build the command for running the event in the foreground.
      *
-     * @param  \Illuminate\Console\Scheduling\Event  $event
+     * @param  Event  $event
      * @return string
      */
     protected function buildForegroundCommand(Event $event)
@@ -38,7 +38,7 @@ class CommandBuilder
     /**
      * Build the command for running the event in the background.
      *
-     * @param  \Illuminate\Console\Scheduling\Event  $event
+     * @param  Event  $event
      * @return string
      */
     protected function buildBackgroundCommand(Event $event)
@@ -50,7 +50,7 @@ class CommandBuilder
  
 
         return $this->ensureCorrectUser($event,
-            '('.$event->command.$redirect.$output.' 2>&1 '.(windows_os() ? '&' : ';').') > '
+            '('.$event->command.$redirect.$output.' 2>&1 '.(ProcessUtils::windowsOs() ? '&' : ';').') > '
             .ProcessUtils::escapeArgument($event->getDefaultOutput()).' 2>&1 &'
         );
     }
@@ -59,12 +59,13 @@ class CommandBuilder
     /**
      * Finalize the event's command syntax with the correct user.
      *
-     * @param  \Illuminate\Console\Scheduling\Event  $event
+     * @param  Event  $event
      * @param  string  $command
      * @return string
      */
     protected function ensureCorrectUser(Event $event, $command)
     {
-        return $event->user && ! windows_os() ? 'sudo -u '.$event->user.' -- sh -c \''.$command.'\'' : $command;
+        return $event->user && ! ProcessUtils::windowsOs() ? 'sudo -u '.$event->user.' -- sh -c \''.$command.'\'' : $command;
     }
+
 }

@@ -4,11 +4,14 @@ namespace Scheduler;
 
 use Closure;
 use Cron\CronExpression;
-use Symfony\Component\Process\Process;
 use Scheduler\Mutex\EventMutex;
+use Symfony\Component\Process\Process;
+use Scheduler\Utility\ManagesFrequencies;
+use Scheduler\Utility\CommandBuilder;
 
 class Event
 {
+    use ManagesFrequencies;
     /**
      * The command string.
      *
@@ -174,8 +177,8 @@ class Event
         }
 
         $this->runInBackground
-            ? $this->runCommandInBackground()
-            : $this->runCommandInForeground();
+        ? $this->runCommandInBackground()
+        : $this->runCommandInForeground();
     }
 
     /**
@@ -199,7 +202,7 @@ class Event
 
         (new Process(
             $this->buildCommand(),
-            base_path(),
+            null,
             null,
             null,
             null
@@ -219,7 +222,7 @@ class Event
 
         (new Process(
             $this->buildCommand(),
-            base_path(),
+            null,
             null,
             null,
             null
@@ -262,28 +265,14 @@ class Event
     /**
      * Determine if the given event should run based on the Cron expression.
      *
-     * @param  \Illuminate\Contracts\Foundation\Application  $app
      * @return bool
      */
-    public function isDue($app)
+    public function isDue()
     {
-        if (!$this->runsInMaintenanceMode() && $app->isDownForMaintenance()) {
-            return false;
-        }
-
-        return $this->expressionPasses() &&
-            $this->runsInEnvironment($app->environment());
+        return $this->expressionPasses() ;
     }
 
-    /**
-     * Determine if the event runs in maintenance mode.
-     *
-     * @return bool
-     */
-    public function runsInMaintenanceMode()
-    {
-        return $this->evenInMaintenanceMode;
-    }
+ 
 
     /**
      * Determine if the Cron expression passes.
@@ -292,22 +281,7 @@ class Event
      */
     protected function expressionPasses()
     {
-        if ($this->timezone) {
-            $date->setTimezone($this->timezone);
-        }
-
         return CronExpression::factory($this->expression)->isDue('now');
-    }
-
-    /**
-     * Determine if the event runs in the given environment.
-     *
-     * @param  string  $environment
-     * @return bool
-     */
-    public function runsInEnvironment($environment)
-    {
-        return empty($this->environments) || in_array($environment, $this->environments);
     }
 
 
@@ -338,7 +312,6 @@ class Event
         return $this->sendOutputTo($location, true);
     }
 
-
     /**
      * State that the command should run in background.
      *
@@ -364,30 +337,6 @@ class Event
         return $this;
     }
 
-    /**
-     * Limit the environments the command should run in.
-     *
-     * @param  array|mixed  $environments
-     * @return $this
-     */
-    public function environments($environments)
-    {
-        $this->environments = is_array($environments) ? $environments : func_get_args();
-
-        return $this;
-    }
-
-    /**
-     * State that the command should run even in maintenance mode.
-     *
-     * @return $this
-     */
-    public function evenInMaintenanceMode()
-    {
-        $this->evenInMaintenanceMode = true;
-
-        return $this;
-    }
 
     /**
      * Do not allow the event to overlap each other.
@@ -406,18 +355,6 @@ class Event
         })->skip(function () {
             return $this->mutex->exists($this);
         });
-    }
-
-    /**
-     * Allow the event to only run on one server for each cron expression.
-     *
-     * @return $this
-     */
-    public function onOneServer()
-    {
-        $this->onOneServer = true;
-
-        return $this;
     }
 
     /**
@@ -524,8 +461,6 @@ class Event
 
         return $this->buildCommand();
     }
-
-
 
     /**
      * Get the Cron expression for the event.

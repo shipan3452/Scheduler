@@ -1,24 +1,24 @@
 <?php
 namespace Scheduler\Mutex;
 use Scheduler\Event;
-use Scheduler\Contract\CacheStore as Cache;
+use Scheduler\CacheStore\CacheStore;
 
-class CacheMutex implements EventMutex
+class CacheEventMutex implements EventMutex
 {
     /**
-     * The cache repository implementation.
+     * The cache store implementation.
      *
-     * @var Repository
+     * @var CacheStore
      */
     public $cache;
 
     /**
      * Create a new overlapping strategy.
      *
-     * @param  Repository  $cache
+     * @param  CacheStore  $cacheStore
      * @return void
      */
-    public function __construct(Cache $cache)
+    public function __construct(CacheStore $cache)
     {
         $this->cache = $cache;
     }

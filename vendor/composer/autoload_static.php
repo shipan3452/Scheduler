@@ -10,6 +10,11 @@ class ComposerStaticInit2b35e4fb065cd1c825a67b82cacd00bc
         'S' => 
         array (
             'Symfony\\Component\\Process\\' => 26,
+            'Scheduler\\' => 10,
+        ),
+        'P' => 
+        array (
+            'Predis\\' => 7,
         ),
         'C' => 
         array (
@@ -21,6 +26,14 @@ class ComposerStaticInit2b35e4fb065cd1c825a67b82cacd00bc
         'Symfony\\Component\\Process\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/process',
+        ),
+        'Scheduler\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Predis\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/predis/predis/src',
         ),
         'Cron\\' => 
         array (
