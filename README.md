@@ -14,12 +14,12 @@ use Scheduler\Schedule;
 
 $schedule=new Schedule();
 
-$schedule->exec('php example1.php')->cron('* * * * * *');
+$schedule->exec('php example1.php')->cron('* * * * * ');
 $schedule->exec('php example2.php')->everyMinute();
 $schedule->exec('php example3.php')->dailyAt('13:00');
 
 $schedule->run();
-
+```
 2. 防止任务重复执行
 ```
 use Scheduler\Schedule;
@@ -40,8 +40,8 @@ use Scheduler\Schedule;
 $schedule=new Schedule();
 //runInBackground,这样任多个定时任务就可以并行运行了。如果不指定，多个任务之间就是串行的！！！
 
-$schedule->exec('php example1.php')->cron('* * * * * *')->runInBackground();
-$schedule->exec('php example2.php')->cron('* * * * * *')->runInBackground();
+$schedule->exec('php example1.php')->cron('* * * * *')->runInBackground();
+$schedule->exec('php example2.php')->cron('* * * * *')->runInBackground();
 ```
 
 
