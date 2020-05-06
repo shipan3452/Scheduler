@@ -20,7 +20,12 @@ $schedule->exec('php example3.php')->dailyAt('13:00');
 
 $schedule->run();
 ```
+use Scheduler\Schedule;
 
+$schedule=new Schedule();
+
+$schedule->exec('php example1.php')->cron('* * * * * *');
+```
 2. 防止任务重复执行
 ```
 use Scheduler\Schedule;
@@ -35,7 +40,20 @@ $schedule->exec('php example1.php')->everyMinute()->withoutOverlapping();
 $schedule->run();
 ```
 
-3. 任务输出重定向到文件
+3. 任务后台并行执行
+```
+use Scheduler\Schedule;
+
+$schedule=new Schedule();
+
+//runInBackground,这样任多个定时任务就可以并行运行了，如果不指定，就是串行的
+$schedule->exec('php example1.php')->cron('* * * * * *')->runInBackground();
+$schedule->exec('php example2.php')->cron('* * * * * *')->runInBackground();
+
+```
+
+
+4. 任务输出重定向到文件
 
 ```
 use Scheduler\Schedule;
@@ -47,7 +65,7 @@ $schedule->exec('php example1.php')->daily()->appendOutputTo($filePath);
 $schedule->run();
 ```
 
-4. 任务执行钩子
+5. 任务执行钩子
 
 ```
 use Scheduler\Schedule;
