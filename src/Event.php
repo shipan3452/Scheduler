@@ -301,6 +301,9 @@ class Event
      */
     public function withoutOverlapping($expiresAt = 1440)
     {
+        if(is_null($this->mutex)){
+            throw new \Exception("use withoutOverlapping method must need a EventMutex");
+        }
         $this->withoutOverlapping = true;
 
         $this->expiresAt = $expiresAt;
