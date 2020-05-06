@@ -43,13 +43,11 @@ $schedule->run();
 3. 任务后台并行执行
 ```
 use Scheduler\Schedule;
-
 $schedule=new Schedule();
-
 //runInBackground,这样任多个定时任务就可以并行运行了，如果不指定，就是串行的
+
 $schedule->exec('php example1.php')->cron('* * * * * *')->runInBackground();
 $schedule->exec('php example2.php')->cron('* * * * * *')->runInBackground();
-
 ```
 
 
