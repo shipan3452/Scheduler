@@ -46,10 +46,10 @@ class RedisStore implements CacheStore
      *
      * @param  string  $key
      * @param  mixed   $value
-     * @param  float|int  $minutes
+     * @param  float|int  $second
      * @return bool
      */
-    public function add($key, $value, $minutes)
+    public function add($key, $value, $second)
     {
         $lua = "return redis.call('exists',KEYS[1])<1 and redis.call('setex',KEYS[1],ARGV[2],ARGV[1])";
 
@@ -58,7 +58,7 @@ class RedisStore implements CacheStore
             1,
             $key,
             $this->serialize($value),
-            (int) max(1, $minutes * 60)
+            (int) max(1, $second)
         );
     }
 

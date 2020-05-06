@@ -42,9 +42,12 @@ class Schedule
     public function run()
     {
         foreach ($this->dueEvents() as $event) {
-            // if (! $event->filtersPass($this->laravel)) {
-            //     continue;
-            // }
+            if (
+                $event->withoutOverlapping &&
+                !$this->eventMutex->create($event)
+            ) {
+                return;
+            }
             $event->run();
             $event->callAfterCallbacks();
         }
@@ -87,18 +90,6 @@ class Schedule
         });
         return implode(" ", $parameters);
     }
-
-    /**
-     * Determine if the server is allowed to run this event.
-     *
-     * @param  Scheduler\Event  $event
-     * @param  \DateTimeInterface  $time
-     * @return bool
-     */
-    // public function serverShouldRun(Event $event, DateTimeInterface $time)
-    // {
-    //     return $this->schedulingMutex->create($event, $time);
-    // }
 
     /**
      * Get all of the events on the schedule that are due.

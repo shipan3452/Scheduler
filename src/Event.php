@@ -27,32 +27,12 @@ class Event
     public $expression = '* * * * *';
 
     /**
-     * The timezone the date should be evaluated on.
-     *
-     * @var \DateTimeZone|string
-     */
-    public $timezone;
-
-    /**
      * The user the command should run as.
      *
      * @var string
      */
     public $user;
 
-    /**
-     * The list of environments the command should run under.
-     *
-     * @var array
-     */
-    public $environments = [];
-
-    /**
-     * Indicates if the command should run in maintenance mode.
-     *
-     * @var bool
-     */
-    public $evenInMaintenanceMode = false;
 
     /**
      * Indicates if the command should not overlap itself.
@@ -61,12 +41,6 @@ class Event
      */
     public $withoutOverlapping = false;
 
-    /**
-     * Indicates if the command should only be allowed to run on one server for each cron expression.
-     *
-     * @var bool
-     */
-    public $onOneServer = false;
 
     /**
      * The amount of time the mutex should be valid.
@@ -82,19 +56,7 @@ class Event
      */
     public $runInBackground = false;
 
-    /**
-     * The array of filter callbacks.
-     *
-     * @var array
-     */
-    protected $filters = [];
 
-    /**
-     * The array of reject callbacks.
-     *
-     * @var array
-     */
-    protected $rejects = [];
 
     /**
      * The location that output should be sent to.
@@ -169,13 +131,6 @@ class Event
      */
     public function run()
     {
-        if (
-            $this->withoutOverlapping &&
-            !$this->mutex->create($this)
-        ) {
-            return;
-        }
-
         $this->runInBackground
         ? $this->runCommandInBackground()
         : $this->runCommandInForeground();
@@ -352,40 +307,9 @@ class Event
 
         return $this->then(function () {
             $this->mutex->forget($this);
-        })->skip(function () {
-            return $this->mutex->exists($this);
         });
     }
 
-    /**
-     * Register a callback to further filter the schedule.
-     *
-     * @param  \Closure|bool  $callback
-     * @return $this
-     */
-    public function when($callback)
-    {
-        $this->filters[] = is_callable($callback) ? $callback : function () use ($callback) {
-            return $callback;
-        };
-
-        return $this;
-    }
-
-    /**
-     * Register a callback to further filter the schedule.
-     *
-     * @param  \Closure|bool  $callback
-     * @return $this
-     */
-    public function skip($callback)
-    {
-        $this->rejects[] = is_callable($callback) ? $callback : function () use ($callback) {
-            return $callback;
-        };
-
-        return $this;
-    }
 
     /**
      * Register a callback to be called before the operation.
